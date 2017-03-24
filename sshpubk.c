@@ -639,7 +639,8 @@ struct ssh2_userkey *ssh2_load_userkey(const Filename *filename,
                                        const char **errorstr)
 {
     FILE *fp;
-    char header[40], *b, *encryption, *comment, *mac;
+    char header[40] = {0};
+    char *b, *encryption, *comment, *mac;
     const struct ssh_signkey *alg;
     struct ssh2_userkey *ret;
     int cipher, cipherblk;
@@ -660,8 +661,21 @@ struct ssh2_userkey *ssh2_load_userkey(const Filename *filename,
     }
 
     /* Read the first header line which contains the key type. */
-    if (!read_header(fp, header))
-	goto error;
+    if (!read_header(fp, header)) {
+        /* It didn't look like a PuTTY file, but was it an OpenSSH
+         * file instead?  The read_header reads until a new line then
+         * errors if it didn't find a ':', the string is not terminated,
+         * but since the header is read in, we can just do a memcmp */
+        if (!memcmp(header, "-----BEGIN OPENSSH PRIVATE KEY-----", 35))
+        {
+            /* Load as an OpenSSH combi instead... */
+            fclose(fp);
+            fp = NULL;
+            return openssh_new_read(filename, passphrase, errorstr);
+        }
+        error = "unknown file format";
+        goto error;
+    }
     if (0 == strcmp(header, "PuTTY-User-Key-File-2")) {
 	old_fmt = 0;
     } else if (0 == strcmp(header, "PuTTY-User-Key-File-1")) {
@@ -1109,7 +1123,8 @@ unsigned char *ssh2_userkey_loadpub(const Filename *filename, char **algorithm,
 				    const char **errorstr)
 {
     FILE *fp;
-    char header[40], *b;
+    char header[40] = {0};
+    char *b;
     const struct ssh_signkey *alg;
     unsigned char *public_blob;
     int public_blob_len;
@@ -1138,6 +1153,10 @@ unsigned char *ssh2_userkey_loadpub(const Filename *filename, char **algorithm,
                                              commentptr, errorstr);
         fclose(fp);
         return ret;
+    } else if (type == SSH_KEYTYPE_OPENSSH_NEW) {
+        /* Load as an OpenSSH combi instead... */
+        return openssh_new_public(filename, algorithm, pub_blob_len,
+                                  commentptr, errorstr);
     } else if (type != SSH_KEYTYPE_SSH2) {
         error = "not a PuTTY SSH-2 private key";
         goto error;
@@ -1218,7 +1237,8 @@ unsigned char *ssh2_userkey_loadpub(const Filename *filename, char **algorithm,
 int ssh2_userkey_encrypted(const Filename *filename, char **commentptr)
 {
     FILE *fp;
-    char header[40], *b, *comment;
+    char header[40] = {0};
+    char *b, *comment;
     int ret;
 
     if (commentptr)
@@ -1230,8 +1250,19 @@ int ssh2_userkey_encrypted(const Filename *filename, char **commentptr)
     if (!read_header(fp, header)
 	|| (0 != strcmp(header, "PuTTY-User-Key-File-2") &&
 	    0 != strcmp(header, "PuTTY-User-Key-File-1"))) {
-	fclose(fp);
-	return 0;
+        fclose(fp);
+
+        /* It didn't look like a PuTTY file, but was it an OpenSSH
+         * file instead?  The read_header reads until a new line then
+         * errors if it didn't find a ':', the string is not terminated,
+         * but since the header is read in, we can just do a memcmp */
+        if (!memcmp(header, "-----BEGIN OPENSSH PRIVATE KEY-----", 35))
+        {
+            /* Load as an OpenSSH combi instead... */
+            return openssh_new_encrypted(filename);
+        }
+
+        return 0;
     }
     if ((b = read_body(fp)) == NULL) {
 	fclose(fp);

@@ -17,9 +17,6 @@ int openssh_new_encrypted(const Filename *filename);
 struct ssh2_userkey *openssh_pem_read(const Filename *filename,
                                       char *passphrase,
                                       const char **errmsg_p);
-struct ssh2_userkey *openssh_new_read(const Filename *filename,
-                                      char *passphrase,
-                                      const char **errmsg_p);
 int openssh_auto_write(const Filename *filename, struct ssh2_userkey *key,
                        char *passphrase);
 int openssh_pem_write(const Filename *filename, struct ssh2_userkey *key,
@@ -1289,6 +1286,11 @@ struct openssh_new_key {
         } bcrypt;
     } kdfopts;
     int nkeys, key_wanted;
+
+    /* This points to the position within keyblob of the first public key */
+    unsigned char *publicstr;
+    int publiclen;
+
     /* This too points to a position within keyblob */
     unsigned char *privatestr;
     int privatelen;
@@ -1483,6 +1485,10 @@ static struct openssh_new_key *load_openssh_new_key(const Filename *filename,
             errmsg = "encountered EOF before kdf options\n";
             goto error;
         }
+        if (key_index == 0) {
+            ret->publicstr = (unsigned char*)pubkey;
+            ret->publiclen = pubkeylen;
+        }
     }
 
     /*
@@ -1539,8 +1545,65 @@ int openssh_new_encrypted(const Filename *filename)
     return ret;
 }
 
+unsigned char* openssh_new_public(const Filename *filename, char **algorithm,
+				    int *pub_blob_len, char **commentptr, const char **errorstr)
+{
+    struct openssh_new_key *key = load_openssh_new_key(filename, errorstr);
+    unsigned char* ret = NULL;
+    const struct ssh_signkey *alg;
+
+    if (!key)
+    {
+        return NULL;
+    }
+
+    {
+        unsigned char* name;
+        char *name_zt;
+        int nameLen;
+        const void* ptr;
+        int tmpLen;
+        ptr = key->publicstr;
+        tmpLen = key->publiclen;
+        name = get_ssh_string(&tmpLen, &ptr, &nameLen);
+        if (!name)
+        {
+            *errorstr = "no algorithm name in public blob";
+            goto error;
+        }
+        name_zt = dupprintf("%.*s", nameLen, (char *)name);
+        alg = find_pubkey_alg(name_zt);
+        sfree(name_zt);
+        if (!alg)
+        {
+            *errorstr = "unsupported algorithm";
+            goto error;
+        }
+    }
+
+    ret = snewn(key->publiclen, unsigned char);
+    if (!ret)
+    {
+        *errorstr = "out of memory";
+        goto error;
+    }
+
+    *algorithm = dupstr(alg->name);
+    memcpy(ret, key->publicstr, key->publiclen);
+    *pub_blob_len = key->publiclen;
+    *commentptr = dupstr(filename_to_str(filename));
+
+error:
+    smemclr(key->keyblob, key->keyblob_size);
+    sfree(key->keyblob);
+    smemclr(key, sizeof(*key));
+    sfree(key);
+
+    return ret;
+}
+ 
 struct ssh2_userkey *openssh_new_read(const Filename *filename,
-                                      char *passphrase,
+                                      const char *passphrase,
                                       const char **errmsg_p)
 {
     struct openssh_new_key *key = load_openssh_new_key(filename, errmsg_p);

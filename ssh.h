@@ -773,6 +773,13 @@ int import_ssh1(const Filename *filename, int type,
 		struct RSAKey *key, char *passphrase, const char **errmsg_p);
 struct ssh2_userkey *import_ssh2(const Filename *filename, int type,
 				 char *passphrase, const char **errmsg_p);
+struct ssh2_userkey *openssh_new_read(const Filename *filename,
+                                      const char *passphrase,
+                                      const char **errmsg_p);
+int openssh_new_encrypted(const Filename *filename);
+unsigned char* openssh_new_public(const Filename *filename, char **algorithm,
+				                  int *pub_blob_len, char **commentptr,
+				                  const char **errorstr);
 int export_ssh1(const Filename *filename, int type,
 		struct RSAKey *key, char *passphrase);
 int export_ssh2(const Filename *filename, int type,

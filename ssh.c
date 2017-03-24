@@ -9364,7 +9364,8 @@ static void do_ssh2_authconn(Ssh ssh, const unsigned char *in, int inlen,
 	    keytype = key_type(s->keyfile);
 	    if (keytype == SSH_KEYTYPE_SSH2 ||
                 keytype == SSH_KEYTYPE_SSH2_PUBLIC_RFC4716 ||
-                keytype == SSH_KEYTYPE_SSH2_PUBLIC_OPENSSH) {
+                keytype == SSH_KEYTYPE_SSH2_PUBLIC_OPENSSH ||
+                keytype == SSH_KEYTYPE_OPENSSH_NEW) {
 		const char *error;
 		s->publickey_blob =
 		    ssh2_userkey_loadpub(s->keyfile,
@@ -9372,7 +9373,8 @@ static void do_ssh2_authconn(Ssh ssh, const unsigned char *in, int inlen,
 					 &s->publickey_bloblen, 
 					 &s->publickey_comment, &error);
 		if (s->publickey_blob) {
-		    s->privatekey_available = (keytype == SSH_KEYTYPE_SSH2);
+		    s->privatekey_available = (keytype == SSH_KEYTYPE_SSH2 ||
+                                       keytype == SSH_KEYTYPE_OPENSSH_NEW);
                     if (!s->privatekey_available)
                         logeventf(ssh, "Key file contains public key only");
 		    s->privatekey_encrypted =

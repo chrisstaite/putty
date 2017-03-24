@@ -306,7 +306,7 @@ psftp    : [C] psftp winsftp wincons WINSSH BE_SSH SFTP wildcard WINMISC
 
 pageant  : [G] winpgnt pageant sshrsa sshpubk sshdes sshbn sshmd5 version
 	 + tree234 misc sshaes sshsha winsecur winpgntc aqsync sshdss sshsh256
-	 + sshsh512 winutils sshecc winmisc winhelp conf pageant.res LIBS
+	 + sshsh512 winutils sshecc winmisc winhelp conf pageant.res LIBS IMPORT
 
 puttygen : [G] winpgen sshrsag sshdssg sshprime sshdes sshbn sshmd5 version
          + sshrand winnoise sshsha winstore misc winctrls sshrsa sshdss winmisc
@@ -319,13 +319,13 @@ pterm    : [X] GTKTERM uxmisc misc ldisc settings uxpty uxsel BE_NONE uxstore
 	 + nogss GTKMAIN
 putty    : [X] GTKTERM uxmisc misc ldisc settings uxsel U_BE_ALL uxstore
          + uxsignal CHARSET uxputty NONSSH UXSSH UXMISC ux_x11 xpmputty
-         + xpmpucfg GTKMAIN
+         + xpmpucfg GTKMAIN IMPORT
 puttytel : [X] GTKTERM uxmisc misc ldisc settings uxsel U_BE_NOSSH
 	 + uxstore uxsignal CHARSET uxputty NONSSH UXMISC xpmputty xpmpucfg
 	 + nogss GTKMAIN
 
 plink    : [U] uxplink uxcons NONSSH UXSSH U_BE_ALL logging UXMISC uxsignal
-         + ux_x11 noterm uxnogtk sessprep cmdline
+         + ux_x11 noterm uxnogtk sessprep cmdline IMPORT
 
 PUTTYGEN_UNIX = sshrsag sshdssg sshprime sshdes sshbn sshmd5 version
          + sshrand uxnoise sshsha misc sshrsa sshdss uxcons uxstore uxmisc
@@ -334,13 +334,13 @@ PUTTYGEN_UNIX = sshrsag sshdssg sshprime sshdes sshbn sshmd5 version
 puttygen : [U] cmdgen PUTTYGEN_UNIX
 cgtest   : [UT] cgtest PUTTYGEN_UNIX
 
-pscp     : [U] pscp uxsftp uxcons UXSSH BE_SSH SFTP wildcard UXMISC uxnogtk
-psftp    : [U] psftp uxsftp uxcons UXSSH BE_SSH SFTP wildcard UXMISC uxnogtk
+pscp     : [U] pscp uxsftp uxcons UXSSH BE_SSH SFTP wildcard UXMISC uxnogtk IMPORT
+psftp    : [U] psftp uxsftp uxcons UXSSH BE_SSH SFTP wildcard UXMISC uxnogtk IMPORT
 
 pageant  : [X] uxpgnt uxagentc aqsync pageant sshrsa sshpubk sshdes sshbn
 	 + sshmd5 version tree234 misc sshaes sshsha sshdss sshsh256 sshsh512
 	 + sshecc conf uxsignal nocproxy nogss be_none x11fwd ux_x11 uxcons
-	 + gtkask gtkmisc UXMISC
+	 + gtkask gtkmisc UXMISC IMPORT
 
 ptermapp : [XT] GTKTERM uxmisc misc ldisc settings uxpty uxsel BE_NONE uxstore
          + uxsignal CHARSET uxpterm version time xpmpterm xpmptcfg
