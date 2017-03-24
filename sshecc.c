@@ -1278,8 +1278,7 @@ static struct ec_point *ecp_mulm(const struct ec_point *p, const Bignum n)
     return P1;
 }
 
-/* Not static because it is used by sshecdsag.c to generate a new key */
-struct ec_point *ecp_mul(const struct ec_point *a, const Bignum b)
+static struct ec_point *ecp_mul(const struct ec_point *a, const Bignum b)
 {
     if (a->curve->type == EC_WEIERSTRASS) {
         return ecp_mulw(a, b);
